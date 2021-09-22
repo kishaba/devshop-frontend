@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import React from 'react'
+import Alert from '../../components/Alert'
+import Button from '../../components/Button'
 import Layout from '../../components/Layout'
 import Table from '../../components/Table'
 import Title from '../../components/Title'
@@ -35,16 +37,14 @@ const Index = () => {
       {/* <pre>{JSON.stringify(data, null, 2)} </pre> */}
       <div className="mt-8"></div>
       <div>
-        <Link href="/categories/create">
-          <a>Criar Categoria</a>
-        </Link>
+        <Button.Link href="/categories/create"> Criar Categoria</Button.Link>
       </div>
       <div className="flex flex-col mt-8">
         <div className="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           {data && data.getAllCategories && data.getAllCategories.length === 0 && (
-            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">
+            <Alert>
               <p>Nenhuma categoria encontrada</p>
-            </div>
+            </Alert>
           )}
           {data && data.getAllCategories && data.getAllCategories.length > 0 && (
             <div className="align-middle inline-block min-w-full shadow overflow-hidden sm:rounded-lg border-b border-gray-200">
