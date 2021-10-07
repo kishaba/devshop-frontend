@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { useMutation, useQuery } from '../../../lib/graphql'
+import { useMutation, useQuery, fetcher } from '../../../lib/graphql'
 import { useFormik } from 'formik'
 import Layout from '../../../components/Layout'
 import Title from '../../../components/Title'
 import Input from '../../../components/Input'
 import Button from '../../../components/Button'
+import * as Yup from 'yup'
+
+let id = ''
 
 const UPDATE_CATEGORY = `
     mutation updateCategory($id: String!, $name: String!,$slug: String!) {
@@ -21,9 +24,40 @@ const UPDATE_CATEGORY = `
       }
     }
 `
+const CategorySchema = Yup.object().shape({
+  name: Yup.string()
+    .min(3, 'Por Favor, informe pelo menos um nome com 3 caracteres')
+    .required('Por Favor, informe um nome'),
+  slug: Yup.string()
+    .min(3, 'Por favor, informe um slug para a categoria')
+    .required('Por Favor, informe um slug')
+    .test(
+      'is-unique',
+      'Por favor utilize outro slug esse já está em uso',
+      async value => {
+        const ret = await fetcher(
+          JSON.stringify({
+            query: `query{
+            getCategoryBySlug(slug:"${value}"){
+              id
+            }
+          }`
+          })
+        )
+        if (ret.errors) {
+          return true
+        }
+        if (ret.data.getCategoryBySlug.id === id) {
+          return true
+        }
+        return false
+      }
+    )
+})
 
 const Edit = () => {
   const router = useRouter()
+  id = router.query.id
   const [updatedata, updateCategory] = useMutation(UPDATE_CATEGORY)
   //buscou dados no servidor
   const { data } = useQuery(`
@@ -41,11 +75,13 @@ const Edit = () => {
       name: '',
       slug: ''
     },
+    validationSchema: CategorySchema,
     onSubmit: async values => {
       const category = {
         ...values,
         id: router.query.id
       }
+
       //console.log(category)
       const data = await updateCategory(category)
       console.log(data)
@@ -85,6 +121,7 @@ const Edit = () => {
                   value={form.values.name}
                   onChange={form.handleChange}
                   name="name"
+                  errorMessage={form.errors.name}
                 />
                 <Input
                   label="Slug da categoria"
@@ -93,6 +130,7 @@ const Edit = () => {
                   onChange={form.handleChange}
                   name="slug"
                   helptext="slug é utilizado para urls amigaveis"
+                  errorMessage={form.errors.slug}
                 />
               </div>
               <Button type="submit">Salvar Categoria</Button>

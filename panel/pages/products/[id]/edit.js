@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { useMutation, useQuery } from '../../../lib/graphql'
+import { useMutation, useQuery, fetcher } from '../../../lib/graphql'
 import { useFormik } from 'formik'
 import Layout from '../../../components/Layout'
 import Title from '../../../components/Title'
 import Input from '../../../components/Input'
 import Button from '../../../components/Button'
 import Select from '../../../components/Select'
+import * as Yup from 'yup'
 
+let id = ''
 const UPDATE_PRODUCT = `
     mutation updateProduct($id: String!, $name: String!,$slug: String!,$description: String!,$category: String!) {
       updateProduct (input:{
@@ -33,8 +35,44 @@ const GET_ALL_CATEGORIES = `
       }
     }
   `
+
+const ProductSchema = Yup.object().shape({
+  name: Yup.string()
+    .min(3, 'Por Favor, informe pelo menos um nome com 3 caracteres')
+    .required('Por Favor, informe um nome'),
+  slug: Yup.string()
+    .min(3, 'Por favor, informe um slug de pelo menos 3 caracteres')
+    .required('Por Favor, informe um slug')
+    .test(
+      'is-unique',
+      'Por favor utilize outro slug esse já está em uso',
+      async value => {
+        const ret = await fetcher(
+          JSON.stringify({
+            query: `query{
+            getProductBySlug(slug:"${value}"){
+              id
+            }
+          }`
+          })
+        )
+        if (ret.errors) {
+          return true
+        }
+        if (ret.data.getProductBySlug.id === id) {
+          return true
+        }
+        return false
+      }
+    ),
+  description: Yup.string()
+    .min(10, 'Por favor, informe uma descroição de pelo menos 10 caracteres')
+    .required('Por Favor, informa descrição'),
+  category: Yup.string().required('Por Favor, informe uma categoria')
+})
 const Edit = () => {
   const router = useRouter()
+  id = router.query.id
   const [updatedata, updateProduct] = useMutation(UPDATE_PRODUCT)
   const { data: categories, mutate } = useQuery(GET_ALL_CATEGORIES)
   //buscou dados no servidor
@@ -57,6 +95,7 @@ const Edit = () => {
       description: '',
       category: ''
     },
+    validationSchema: ProductSchema,
     onSubmit: async values => {
       const product = {
         ...values,
@@ -115,6 +154,7 @@ const Edit = () => {
                   value={form.values.name}
                   onChange={form.handleChange}
                   name="name"
+                  errorMessage={form.errors.name}
                 />
                 <Input
                   label="Slug do produto"
@@ -123,6 +163,7 @@ const Edit = () => {
                   onChange={form.handleChange}
                   name="slug"
                   helptext="slug é utilizado para urls amigaveis"
+                  errorMessage={form.errors.slug}
                 />
                 <Input
                   label="Descrição do produto"
@@ -130,12 +171,15 @@ const Edit = () => {
                   value={form.values.description}
                   onChange={form.handleChange}
                   name="description"
+                  errorMessage={form.errors.description}
                 />
                 <Select
                   label="Selecione a categoria"
                   name="category"
                   onChange={form.handleChange}
                   value={form.values.category}
+                  errorMessage={form.errors.category}
+                  initial={{ id: '', value: 'Selecione...' }}
                   options={options}
                 />
               </div>

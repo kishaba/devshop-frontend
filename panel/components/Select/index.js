@@ -8,7 +8,9 @@ const Select = ({
   onChange,
   name,
   helptext = null,
-  options = []
+  options = [],
+  initial = {},
+  errorMessage = null
 }) => {
   return (
     <div className="w-full px-3">
@@ -26,14 +28,18 @@ const Select = ({
         onChange={onChange}
         name={name}
       >
+        {initial && <option value={initial.id}>{initial.label}</option>}
         {options.map(opt => {
           return (
-            <option key={opt.id} value={opt.id} checked={value == opt.id}>
+            <option key={opt.id} value={opt.id} selected={value == opt.id}>
               {opt.label}
             </option>
           )
         })}
       </select>
+      {errorMessage && (
+        <p className="text-red-500 text-xs italic my-2">{errorMessage}</p>
+      )}
       <p className="text-gray-600 text-xs italic mb-4">{helptext}</p>
     </div>
   )

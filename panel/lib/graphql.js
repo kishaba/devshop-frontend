@@ -39,4 +39,4 @@ const useMutation = query => {
   return [data, mutate]
 }
 
-export { useQuery, useMutation }
+export { useQuery, useMutation, fetcher }

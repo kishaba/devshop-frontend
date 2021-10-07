@@ -1,12 +1,11 @@
 import React from 'react'
 import Layout from '../../components/Layout'
 import Title from '../../components/Title'
-import { useMutation, useQuery } from '../../lib/graphql'
+import { useMutation, useQuery, fetcher } from '../../lib/graphql'
 import { useFormik } from 'formik'
 import { useRouter } from 'next/router'
 import Button from '../../components/Button'
 import Input from '../../components/Input'
-import Alert from '../../components/Alert'
 import * as Yup from 'yup'
 import Select from '../../components/Select'
 
@@ -38,15 +37,36 @@ const GET_ALL_CATEGORIES = `
     }
   `
 
-const CategorySchema = Yup.object().shape({
+const ProductSchema = Yup.object().shape({
   name: Yup.string()
-    .min(2, 'Too Short!')
-    .max(50, 'Too Long!')
-    .required('Required'),
+    .min(3, 'Por Favor, informe pelo menos um nome com 3 caracteres')
+    .required('Por Favor, informe um nome'),
   slug: Yup.string()
-    .min(2, 'Too Short!')
-    .max(50, 'Too Long!')
-    .required('Required')
+    .min(3, 'Por favor, informe um slug de pelo menos 3 caracteres')
+    .required('Por Favor, informe um slug')
+    .test(
+      'is-unique',
+      'Por favor utilize outro slug esse já está em uso',
+      async value => {
+        const ret = await fetcher(
+          JSON.stringify({
+            query: `query{
+            getProductBySlug(slug:"${value}"){
+              id
+            }
+          }`
+          })
+        )
+        if (ret.errors) {
+          return true
+        }
+        return false
+      }
+    ),
+  description: Yup.string()
+    .min(10, 'Por favor, informe uma descroição de pelo menos 10 caracteres')
+    .required('Por Favor, informa descrição'),
+  category: Yup.string().required('Por Favor, informe uma categoria')
 })
 
 const Index = () => {
@@ -60,7 +80,7 @@ const Index = () => {
       description: '',
       category: ''
     },
-    // validationSchema: CategorySchema,
+    validationSchema: ProductSchema,
     onSubmit: async values => {
       const data = await createProduct(values)
       console.log(data)
@@ -104,6 +124,7 @@ const Index = () => {
                   value={form.values.name}
                   onChange={form.handleChange}
                   name="name"
+                  errorMessage={form.errors.name}
                 />
                 <Input
                   label="Slug do produto"
@@ -112,6 +133,7 @@ const Index = () => {
                   onChange={form.handleChange}
                   name="slug"
                   helptext="slug é utilizado para urls amigaveis"
+                  errorMessage={form.errors.slug}
                 />
                 <Input
                   label="Descrição do produto"
@@ -119,6 +141,7 @@ const Index = () => {
                   value={form.values.description}
                   onChange={form.handleChange}
                   name="description"
+                  errorMessage={form.errors.description}
                 />
                 <Select
                   label="Selecione a categoria"
@@ -126,6 +149,8 @@ const Index = () => {
                   onChange={form.handleChange}
                   value={form.values.category}
                   options={options}
+                  errorMessage={form.errors.category}
+                  initial={{ id: '', label: 'Selecione...' }}
                 />
               </div>
               <Button type="submit">Criar Produto</Button>
