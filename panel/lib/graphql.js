@@ -11,14 +11,16 @@ const fetcher = async query => {
     body: query
   })
   const json = await res.json()
-  return json.data
+  return json
 }
 
 const useQuery = queryStr => {
   const query = {
     query: queryStr
   }
-  return useSWR(JSON.stringify(query), fetcher)
+  const allData = useSWR(JSON.stringify(query), fetcher)
+  const { data, ...rest } = allData
+  return { data: data ? data.data : null, ...rest }
 }
 
 const useMutation = query => {
@@ -31,6 +33,7 @@ const useMutation = query => {
     try {
       const returnedData = await fetcher(JSON.stringify(mutation))
       setData(returnedData)
+      return returnedData
     } catch (err) {}
   }
   return [data, mutate]

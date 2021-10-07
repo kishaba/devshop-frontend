@@ -62,8 +62,11 @@ const Index = () => {
     },
     // validationSchema: CategorySchema,
     onSubmit: async values => {
-      await createProduct(values)
-      router.push('/products')
+      const data = await createProduct(values)
+      console.log(data)
+      if (data && !data.errors) {
+        router.push('/products')
+      }
     }
   })
 
@@ -88,6 +91,11 @@ const Index = () => {
       <div className="flex flex-col mt-8">
         <div className="-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <div className="align-middle inline-block min-w-full bg-white shadow overflow-hidden sm:rounded-lg border-b border-gray-200 p-12">
+            {data && !!data.errors && (
+              <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                Ocorreu um erro ao salvar os dados
+              </p>
+            )}
             <form onSubmit={form.handleSubmit}>
               <div className="flex flex-wrap -mx-3 mb-6">
                 <Input
