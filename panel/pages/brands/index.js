@@ -73,6 +73,12 @@ const Index = () => {
                             </div>
                           </Table.Td>
                           <Table.Td>
+                            <Link href={`/brands/${item.id}/upload`}>
+                              <a className="text-indigo-600 hover:text-indigo-900">
+                                Upload logo
+                              </a>
+                            </Link>{' '}
+                            |{' '}
                             <Link href={`/brands/${item.id}/edit`}>
                               <a className="text-indigo-600 hover:text-indigo-900">
                                 Edit
